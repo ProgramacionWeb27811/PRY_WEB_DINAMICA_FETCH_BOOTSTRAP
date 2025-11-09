@@ -63,7 +63,24 @@
                 </div>
               </div>
 
-              <div class="col-12">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input
+                    type="tel"
+                    class="form-control"
+                    id="phone"
+                    name="phone"
+                    placeholder="Tu número de celular"
+                    required
+                    inputmode="tel"
+                    pattern="^[0-9]{10}$"
+                    title="Ingrese sólo los 10 dígitos">
+                  <label for="phone">Número de celular</label>
+                  <div class="invalid-feedback">Ingresa un número de celular válido</div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
                 <div class="form-floating">
                   <input
                     type="text"
