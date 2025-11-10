@@ -161,23 +161,17 @@
       .then(response => response.text())
       .then(html => {
         main.innerHTML = html;
-        // Ejecutar scripts incluidos en el HTML cargado (inline o con src)
-        // Los scripts añadidos vía innerHTML no se ejecutan automáticamente, así que los re-ejecutamos.
         const scripts = Array.from(main.querySelectorAll('script'));
         scripts.forEach(old => {
           const s = document.createElement('script');
-          // copiar atributos
           for (let i = 0; i < old.attributes.length; i++) {
             const attr = old.attributes[i];
             s.setAttribute(attr.name, attr.value);
           }
-          // mover contenido inline (si lo hay)
           s.text = old.textContent;
-          // reemplazar el nodo viejo por el nuevo en el DOM para que se ejecute
           old.parentNode.replaceChild(s, old);
         });
 
-        // Llamar inicializadores conocidos para la vista cargada
         try {
           if (typeof window.initBookingForm === 'function') window.initBookingForm();
         } catch (err) {
@@ -189,25 +183,23 @@
       .catch(err => main.innerHTML = '<div class="alert alert-danger">Error cargando: ' + (err?.message || err) + '</div>');
   }
 
-  /* ===== Interceptor de formularios SPA =====
-     - Solo actúa sobre <form class="spa-form">.
-     - Respeta method/action.
-     - Aplica validación nativa + Bootstrap (was-validated).
-     - Carga la página de éxito dentro del SPA con loadPage().
+  /* SPA form interceptor:
+    - acts on <form class="spa-form"> only
+    - preserves method/action
+    - applies native validation + Bootstrap (was-validated)
+    - loads success page inside the SPA with loadPage()
   */
   document.addEventListener('submit', function (e) {
     const form = e.target;
-    if (!form.matches('form.spa-form')) return;     // Solo formularios marcados
+    if (!form.matches('form.spa-form')) return;  
     e.preventDefault();
 
-    // Validación HTML5 + feedback Bootstrap
     if (!form.checkValidity()) {
       e.stopPropagation();
       form.classList.add('was-validated');
       return;
     }
 
-    // Construir destino a partir de method/action
     const method = (form.getAttribute('method') || 'get').toLowerCase();
     let url = form.getAttribute('action') || '';
 
@@ -215,60 +207,49 @@
       const params = new URLSearchParams(new FormData(form)).toString();
       if (params) url += (url.includes('?') ? '&' : '?') + params;
     }
-    // Nota: si pones method="post" sin backend, no habrá envío real; normalmente en SPA se usa GET para redirigir a una página de éxito estática.
 
-    // Cargar la “success page” dentro del SPA
     loadPage(e, url);
   });
 
-  // Quitar estado de validación al editar
   document.addEventListener('input', function (e) {
     const f = e.target && e.target.form;
     if (f && f.matches('form.spa-form')) f.classList.remove('was-validated');
   });
 
-  // Carga inicial del Home (déjalo al final de este script)
   loadPage(new Event('load'), 'views/home.html');
 </script>
 
 <script>
-  // Configura audio de fondo sin depender de botones locales de vistas
   function setupBackgroundAudio() {
     const audio = document.getElementById('bg-audio');
     if (!audio) return;
 
-    audio.volume = 0.15; // volumen inicial cómodo
-    // Intento de autoplay silenciado (permitido). Si falla en algún navegador, ignoramos el error.
-    audio.play().catch(() => { /* esperado si la política lo bloquea antes del gesto */ });
+    audio.volume = 0.15; 
+    audio.play().catch(() => {});
 
-    // Al primer gesto del usuario, desmutea y asegura la reproducción
     const unlock = () => {
       audio.muted = false;
       const p = audio.play();
       if (p && typeof p.then === 'function') {
-        p.catch(() => {
-          // Si aun así el navegador lo bloquea, mantenemos silenciado y no insistimos.
-          audio.muted = true;
-        });
-      }
-      window.removeEventListener('pointerdown', unlock, { capture: true });
-      window.removeEventListener('keydown', unlock, { capture: true });
-      window.removeEventListener('touchstart', unlock, { capture: true });
-    };
+          p.catch(() => {
+            audio.muted = true;
+          });
+        }
+        window.removeEventListener('pointerdown', unlock, { capture: true });
+        window.removeEventListener('keydown', unlock, { capture: true });
+        window.removeEventListener('touchstart', unlock, { capture: true });
+      };
 
-    // Usa eventos que cuentan como gesto de usuario en móviles y desktop
-    window.addEventListener('pointerdown', unlock, { once: true, capture: true });
-    window.addEventListener('keydown',     unlock, { once: true, capture: true });
-    window.addEventListener('touchstart',  unlock, { once: true, capture: true });
+      window.addEventListener('pointerdown', unlock, { once: true, capture: true });
+      window.addEventListener('keydown',     unlock, { once: true, capture: true });
+      window.addEventListener('touchstart',  unlock, { once: true, capture: true });
 
-    // Opcional: pausar en segundo plano y reanudar al volver (mejor batería en móviles)
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) audio.pause();
-      else audio.play().catch(() => {/* ignorar */});
-    });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) audio.pause();
+        else audio.play().catch(() => {/* ignorar */});
+      });
   }
 
-  // Inicia el audio cuando el DOM esté listo
   document.addEventListener('DOMContentLoaded', setupBackgroundAudio);
 </script>
 

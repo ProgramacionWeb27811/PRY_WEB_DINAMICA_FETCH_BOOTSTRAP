@@ -1,4 +1,4 @@
-<!-- Reservation Start (SE MANTIENE para “Reservar mesa”) -->
+<!-- Reservation Start -->
 <div class="container-xxl py-5 bg-dark hero-header mb-5">
   <div class="row g-0">
     <div class="col-md-6">
@@ -137,7 +137,7 @@
 <!-- Reservation End -->
 
 <script>
-  // Inicializador específico de la vista Booking (lo invoca index.html tras cargar la vista)
+  // Booking view initializer (invoked by index.html after view load)
   window.initBookingForm = function () {
     const form  = document.querySelector('form.spa-form');
     if (!form) return;
@@ -145,15 +145,15 @@
     const dateI = form.querySelector('#date');
     const timeI = form.querySelector('#time');
 
-    // 1) Fecha mínima = hoy (corrigiendo zona horaria local)
+    // 1) Minimum date = today (adjust for local timezone)
     const tzOffsetMs = (new Date()).getTimezoneOffset() * 60000;
     const todayStr   = new Date(Date.now() - tzOffsetMs).toISOString().slice(0, 10);
     dateI.min = todayStr;
     if (!dateI.value) dateI.value = todayStr;
 
-    // 2) Horarios por día (0=Domingo, 1=Lunes, ...)
+    // 2) Opening hours per day (0=Sunday, 1=Monday, ...)
     const schedule = {
-      0: { start: '10:00', end: '20:00' }, // Domingo
+      0: { start: '10:00', end: '20:00' }, // Sunday
       1: { start: '09:00', end: '21:00' },
       2: { start: '09:00', end: '21:00' },
       3: { start: '09:00', end: '21:00' },
@@ -162,7 +162,7 @@
       6: { start: '09:00', end: '21:00' }
     };
 
-    timeI.step = 900; // 15 min
+  timeI.step = 900; // 15 min
 
     function pad(n) { return String(n).padStart(2, '0'); }
     function roundUp15(dt) {
@@ -172,14 +172,14 @@
     function hhmm(dt) { return `${pad(dt.getHours())}:${pad(dt.getMinutes())}`; }
 
     function applyTimeBounds() {
-      // Día seleccionado
+      // selected day
       const chosen = dateI.value ? new Date(dateI.value + 'T00:00:00') : new Date();
       const day    = chosen.getDay();
       const { start, end } = schedule[day] || { start: '09:00', end: '21:00' };
       timeI.min = start;
       timeI.max = end;
 
-      // Si la reserva es para "hoy", elevar min a siguiente 15'
+      // If the reservation is for "today", raise min to the next 15'
       const now = new Date();
       if (chosen.toDateString() === now.toDateString()) {
         const next = roundUp15(now);
@@ -192,7 +192,7 @@
     function validateDate() {
       dateI.setCustomValidity('');
       if (dateI.value && dateI.value < dateI.min) {
-        dateI.setCustomValidity('La fecha no puede ser anterior a hoy.');
+        dateI.setCustomValidity('The date cannot be earlier than today.');
       }
     }
 
@@ -200,7 +200,7 @@
       timeI.setCustomValidity('');
       if (!timeI.value) return;
       if (timeI.value < timeI.min || timeI.value > timeI.max) {
-        timeI.setCustomValidity(`Selecciona una hora entre ${timeI.min} y ${timeI.max}.`);
+        timeI.setCustomValidity(`Select a time between ${timeI.min} and ${timeI.max}.`);
       }
     }
 
@@ -208,7 +208,7 @@
     timeI.addEventListener('input',  validateTime);
     form.addEventListener('submit',  () => { validateDate(); validateTime(); });
 
-    // Primera aplicación al cargar la vista
+    // Initial application when the view loads
     validateDate();
     applyTimeBounds();
   };
